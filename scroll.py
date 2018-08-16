@@ -138,8 +138,8 @@ def scroll_up(message,delay=150,scroll_down=False,monospace=False):
             current=current.shift_up(1)
             current.blit(blank,0,0,5,1,0,4)
 
-            display.show(current,clear=False,wait=False)
-            sleep(delay)
+        display.show(current,clear=False,wait=False)
+        sleep(delay)
     
 
 def scroll(message,delay=150,upside_down=False,monospace=False):
