@@ -1,31 +1,29 @@
 from microbit import Image, display, sleep
 
-def _message2images(message):
-
+def _validate_message(message):
     if not isinstance(message, (str, list, tuple)):
         raise TypeError('argument must be a string, list or tuple.')
 
     if type(message) is str:
         message=(message)
         
-    result=[]
-
     for m in message:
-        if type(m) is str:
-            l=len(m)
-        elif type(m) == type(Image.HEART):
-            l=None
-        else:
+        if not (type(m) is str or type(m) == type(Image.HEART)):
             raise TypeError('message can only contain text and images.')
+    
+def _message2images(message):
 
-        if l is None:
-            result.append(m)
+    if type(message) is str:
+        message=(message)
+        
+    for gliph in message:
+
+        if type(gliph) is str:
+            for char in gliph:
+                yield Image(char)
+                
         else:
-            for char in m:
-                m=Image(char)
-                result.append(m)
-
-    return result
+            yield gliph
 
 def rotate_image(image,clockwise=True):
 
@@ -64,26 +62,60 @@ def _reflect_image(image,in_x=True):
 
     return new
 
+def _show(image,delay):
+    display.show(image,clear=False,wait=False)
+    sleep(delay)
+    
+def _analyse_image(image):
+
+    # handle single quote as special case otherwise '' looks like "
+    if str(image) == str(Image("'")):
+        return (0,3)
+    
+    left=None
+    right=None
+    skip=0
+    for x in range(5):
+        for y in range(5):
+            if image.get_pixel(x,y)!=0:
+                left=skip
+                break
+
+        if left is not None:
+            break
+            
+        skip+=1
+        
+    if left is None:
+        left=5
+
+    skip=0
+    for x in reversed(range(5)):
+        for y in range(5):
+            if image.get_pixel(x,y)!=0:
+                right=skip
+                break
+
+        if right is not None:
+            break
+            
+        skip+=1
+
+    if right is None:
+        right=5
+
+    return (left,right)
+            
+
+
 def scroll_up(message,delay=150,scroll_down=False,monospace=False):
-
-    def analyse_image(image):
-        rows=reversed(range(5))
-
-        skip=0
-        for y in rows:
-            for x in range(5):
-                if image.get_pixel(x,y)!=0:
-                    return skip
-            skip+=1
-
-        return 5
 
     if not display.is_on():
         return None
     
     err=False
     try:
-        images=_message2images(message)
+        _validate_message(message)
     except TypeError as err_txt:
         save=err_txt
         err=True
@@ -91,25 +123,26 @@ def scroll_up(message,delay=150,scroll_down=False,monospace=False):
     if err:
         raise TypeError(save)
     
-    for i in range(len(images)):
-        new=_rotate_image(images[i],not scroll_down)
-        if scroll_down:
-            new=_reflect_image(new)
-        images[i]=new
 
     blank=Image(5,5)
     current=blank
 
-    for pic in images:
+    for pic in _message2images(message):
 
         if monospace:
-            skip=0
+            top=0
+            bottom=0
         else:
-            skip=analyse_image(pic)
-            if skip == 5:
-                skip=4
+            top,bottom=_analyse_image(pic)
+            if top == 5:
+                top=0
+                bottom=4
 
-        for row in range(5-skip):
+        pic=_rotate_image(pic,not scroll_down)
+        if scroll_down:
+            pic=_reflect_image(pic)
+
+        for row in range(top,5-bottom):
             if scroll_down:
                 current=current.shift_down(1)
                 current.blit(pic,0,row,5,1,0,0)
@@ -117,9 +150,8 @@ def scroll_up(message,delay=150,scroll_down=False,monospace=False):
                 current=current.shift_up(1)
                 current.blit(pic,0,row,5,1,0,4)
 
-            display.show(current,clear=False,wait=False)
-            sleep(delay)
-
+            _show(current,delay)
+            
         if scroll_down:
             current=current.shift_down(1)
             current.blit(blank,0,row,5,1,0,0)
@@ -127,8 +159,7 @@ def scroll_up(message,delay=150,scroll_down=False,monospace=False):
             current=current.shift_up(1)
             current.blit(blank,0,row,5,1,0,4)
 
-        display.show(current,clear=False,wait=False)
-        sleep(delay)
+        _show(current,delay)
 
     for row in range(5):
         if scroll_down:
@@ -138,32 +169,16 @@ def scroll_up(message,delay=150,scroll_down=False,monospace=False):
             current=current.shift_up(1)
             current.blit(blank,0,0,5,1,0,4)
 
-        display.show(current,clear=False,wait=False)
-        sleep(delay)
-    
+        _show(current,delay)
 
 def scroll(message,delay=150,upside_down=False,monospace=False):
     
-    def analyse_image(image,left2right=False):
-        columns=range(5)
-        if not left2right:
-            columns=reversed(columns)
-
-        skip=0
-        for x in columns:
-            for y in range(5):
-                if image.get_pixel(x,y)!=0:
-                    return skip
-            skip+=1
-
-        return 5
-
     if not display.is_on():
         return None
     
     err=False
     try:
-        images=_message2images(message)
+        _validate_message(message)
     except TypeError as err_txt:
         save=err_txt
         err=True
@@ -171,23 +186,26 @@ def scroll(message,delay=150,upside_down=False,monospace=False):
     if err:
         raise TypeError(save)
 
-    if upside_down:
-        for i in range(len(images)):
-            images[i] = _rotate_image(_rotate_image(images[i]))
-
     blank=Image(5,5)
     current=blank
 
-    for pic in images:
+    for pic in _message2images(message):
 
         if monospace:
-            skip=0
+            left=0
+            right=0
         else:
-            skip=analyse_image(pic,upside_down)
-            if skip == 5:
-                skip=4
+            left,right=_analyse_image(pic)
+            if left == 5:
+                left=0
+                right=4
+            #elif upside_down:
+            #    right, left = left, right
+            
+        if upside_down:
+            pic = _rotate_image(_rotate_image(pic))
 
-        for col in range(5-skip):
+        for col in range(left,5-right):
 
             if upside_down:
                 current=current.shift_right(1)
@@ -196,9 +214,7 @@ def scroll(message,delay=150,upside_down=False,monospace=False):
                 current=current.shift_left(1)
                 current.blit(pic,col,0,1,5,4,0)
 
-            display.show(current,clear=False,wait=False)
-            sleep(delay)
-
+            _show(current,delay)
 
         if upside_down:
             current=current.shift_right(1)
@@ -207,8 +223,8 @@ def scroll(message,delay=150,upside_down=False,monospace=False):
             current=current.shift_left(1)
             current.blit(blank,0,0,1,5,4,0)
 
-        display.show(current,clear=False,wait=False)
-        sleep(delay)
+        _show(current,delay)
+
 
 
     for col in range(5):
@@ -219,6 +235,4 @@ def scroll(message,delay=150,upside_down=False,monospace=False):
             current=current.shift_left(1)
             current.blit(blank,0,0,1,5,4,0)
 
-        display.show(current,clear=False,wait=False)
-        sleep(delay)
-
+        _show(current,delay)
