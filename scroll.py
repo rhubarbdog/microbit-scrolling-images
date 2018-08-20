@@ -1,3 +1,6 @@
+#
+# scroll.py - scroll images and text at any orienation
+# Author - Phil Hall, August 2018  
 from microbit import Image, display, sleep
 
 def _validate_message(message):
@@ -105,8 +108,6 @@ def _analyse_image(image):
         right=5
 
     return (left,right)
-            
-
 
 def scroll_up(message,delay=150,scroll_down=False,monospace=False):
 
@@ -123,7 +124,6 @@ def scroll_up(message,delay=150,scroll_down=False,monospace=False):
     if err:
         raise TypeError(save)
     
-
     blank=Image(5,5)
     current=blank
 
@@ -199,8 +199,6 @@ def scroll(message,delay=150,upside_down=False,monospace=False):
             if left == 5:
                 left=0
                 right=4
-            #elif upside_down:
-            #    right, left = left, right
             
         if upside_down:
             pic = _rotate_image(_rotate_image(pic))
@@ -224,8 +222,6 @@ def scroll(message,delay=150,upside_down=False,monospace=False):
             current.blit(blank,0,0,1,5,4,0)
 
         _show(current,delay)
-
-
 
     for col in range(5):
         if upside_down:
