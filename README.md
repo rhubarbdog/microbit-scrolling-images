@@ -11,7 +11,7 @@ scrolls text and images horizontally, <i>message</i> can be a string, or a list/
 if <i>upside_down</i> is True then the text will be scrolled upside down.</br>
 if <i>monospace</i> is True all text and images will be 5 pixels wide seperated by a single blank line. Otherwise images and characters have exactly one pixel of space between them. Except for single quotes because two single quotes look exactly like one double quotes.</br></br>
 <code>scroll_up(message,delay=150,scroll_down=False,monospace=False)</code></br>
-scrolls text and images vertically, by default messages scroll up. <i>message</i> can be a string, or a list/tuple of strings and images. <i>delay</i> controlls how fast the image scrolls.</br>
+scrolls text and images vertically, by default messages scroll up. <i>message</i> can be a string, or a list/tuple of strings and images.</br> <i>delay</i> controlls how fast the image scrolls.</br>
 if <i>scroll_down</i> is True then the text will be scrolled down.</br>
 if <i>monospace</i> is True all text and images will be 5 pixels wide seperated by a single blank line. Otherwise images and characters have exactly one pixel of space between them. Except for single quotes because two single quotes look exactly like one double quotes.</br></br>
 
